@@ -1,0 +1,46 @@
+<div class="container mx-auto p-4 max-w-md bg-yellow-50 rounded-lg shadow-md">
+  <div class="flex justify-center mb-4">
+    <img
+      src="assets/imagens/logo_motoboy.png"
+      alt="Ícone de Entregador"
+      class="w-24 h-24 rounded-full border-2 border-yellow-600"
+    />
+  </div>
+  <h2 class="text-2xl font-bold text-yellow-600 mb-4 text-center">
+    Login do Entregador
+  </h2>
+  <div *ngIf="errorMessage" class="text-red-500 mb-4 text-center">
+    {{ errorMessage }}
+  </div>
+  <form (ngSubmit)="login()" class="space-y-4">
+    <div>
+      <label for="username" class="block text-gray-700 font-semibold"
+        >Usuário</label
+      >
+      <input
+        id="username"
+        type="text"
+        [(ngModel)]="username"
+        name="username"
+        class="border p-2 w-full rounded bg-white"
+        required
+      />
+    </div>
+    <div>
+      <label for="password" class="block text-gray-700 font-semibold"
+        >Senha</label
+      >
+      <input
+        id="password"
+        type="password"
+        [(ngModel)]="password"
+        name="password"
+        class="border p-2 w-full rounded bg-white"
+        required
+      />
+    </div>
+    <button type="submit" class="btn-maroon w-full hover:bg-yellow-700">
+      Entrar
+    </button>
+  </form>
+</div>

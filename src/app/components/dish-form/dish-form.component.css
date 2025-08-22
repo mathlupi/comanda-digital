@@ -1,0 +1,5 @@
+/* Custom styles to complement Tailwind */
+input:invalid:focus,
+textarea:invalid:focus {
+  border-color: #ef4444;
+}

@@ -1,1 +1,33 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --maroon: #e71f11;
+}
+
+body {
+  background-color: #ffffff;
+  color: #333333;
+  font-family: "Arial", sans-serif;
+}
+
+.bg-maroon-700 {
+  background-color: var(--maroon);
+}
+
+.text-maroon-700 {
+  color: var(--maroon);
+}
+
+.btn-maroon {
+  @apply bg-maroon-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-maroon-800 transition duration-200;
+}
+
+.tab-active {
+  @apply bg-maroon-700 text-white border-b-2 border-maroon-700;
+}
+
+.tab-inactive {
+  @apply text-gray-600 hover:text-maroon-700 hover:border-b-2 hover:border-maroon-700;
+}
