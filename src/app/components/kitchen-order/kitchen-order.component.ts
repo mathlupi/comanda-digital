@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
 })
 export class KitchenOrderComponent implements OnInit {
-  activeTab = 'pending';
+  activeTab = 'pendente';
   orders: Order[] = [];
   inProduction: Order[] = [];
   ready: Order[] = [];

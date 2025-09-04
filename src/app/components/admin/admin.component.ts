@@ -32,7 +32,6 @@ export class AdminComponent implements OnInit {
     const userRole = sessionStorage.getItem('userRole');
     console.log('AdminComponent: User role:', userRole); // Debug log
     if (userRole !== 'Admin') {
-      // Match case with AdminLoginComponent and roleGuard
       console.log(
         'AdminComponent: Redirecting to /admin/login due to invalid role'
       );
