@@ -14,7 +14,6 @@ interface User {
 @Component({
   selector: 'app-admin-login',
   templateUrl: './admin-login.component.html',
-  styleUrls: ['./admin-login.component.css'],
   standalone: true,
   imports: [CommonModule, FormsModule, FilterByCategoryPipe],
 })

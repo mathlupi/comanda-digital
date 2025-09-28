@@ -4,18 +4,16 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 export interface Dish {
-  id: number; // Non-optional to match backend
+  id: number;
   name: string;
   description: string;
   price: number;
   imageUrl?: string;
-  category: string;
-  ingredients: string; // String to match backend
+  category: 'Pratos' | 'Bebidas' | 'Sobremesas';
+  ingredients: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class DishService {
   private apiUrl = 'http://localhost:8080/dishes';
 
@@ -64,14 +62,12 @@ export class DishService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('Erro na requisição:', error);
-    let errorMessage = 'Ocorreu um erro desconhecido.';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Erro no cliente: ${error.error.message}`;
-    } else {
-      errorMessage = `Erro no servidor: ${error.status} - ${
-        error.message || error.error || 'Sem detalhes'
-      }`;
-    }
-    return throwError(() => new Error(errorMessage));
+    const msg =
+      error.error instanceof ErrorEvent
+        ? `Erro no cliente: ${error.error.message}`
+        : `Erro no servidor: ${error.status} - ${
+            error.message || error.error || 'Sem detalhes'
+          }`;
+    return throwError(() => new Error(msg));
   }
 }

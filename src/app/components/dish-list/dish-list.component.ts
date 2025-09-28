@@ -18,9 +18,7 @@ export class DishListComponent implements OnInit {
 
   ngOnInit(): void {
     const userRole = sessionStorage.getItem('userRole');
-    console.log('DishListComponent: User role:', userRole ?? 'null');
     if (userRole !== 'Admin') {
-      console.log('DishListComponent: Redirecting to /admin/login');
       this.router.navigate(['/admin/login']);
       return;
     }
@@ -31,69 +29,56 @@ export class DishListComponent implements OnInit {
     this.dishService.getDishes().subscribe({
       next: (data) => {
         this.dishes = data;
-        console.log('DishListComponent: Dishes loaded:', data);
-        data.forEach((dish) => {
-          if (dish.imageUrl) {
-            console.log(
-              'DishListComponent: Image URL for',
-              dish.name,
-              ':',
-              dish.imageUrl
-            );
-            const img = new Image();
-            img.src = dish.imageUrl;
-            img.onload = () =>
-              console.log(
-                'DishListComponent: Image loaded successfully:',
-                dish.imageUrl
-              );
-            img.onerror = () =>
-              console.error(
-                'DishListComponent: Failed to load image:',
-                dish.imageUrl
-              );
-          }
-        });
       },
       error: (err) => {
         this.errorMessage = 'Erro ao carregar pratos: ' + err.message;
-        console.error('DishListComponent: Erro ao carregar pratos:', err);
       },
     });
   }
 
   editDish(id: number): void {
-    console.log('DishListComponent: Navigating to edit dish:', id);
     this.router.navigate(['/admin/edit-dish', id]);
   }
 
   deleteDish(id: number): void {
     if (confirm('Tem certeza que deseja excluir este prato?')) {
-      console.log('DishListComponent: Deleting dish:', id);
       this.dishService.deleteDish(id).subscribe({
         next: () => {
           this.dishes = this.dishes.filter((d) => d.id !== id);
-          console.log('DishListComponent: Prato excluído:', id);
         },
         error: (err) => {
           this.errorMessage = 'Erro ao excluir prato: ' + err.message;
-          console.error('DishListComponent: Erro ao excluir prato:', err);
         },
       });
     }
   }
 
-  addNewDish(): void {
-    console.log('DishListComponent: Navigating to add new dish');
+  /** Alias antigo que alguns templates podem usar */
+  addDish(): void {
     this.router.navigate(['/admin/add-dish']);
   }
 
+  /** Usado no HTML atual */
+  addNewDish(): void {
+    this.addDish();
+  }
+
+  /** Evita quebrar layout se a imagem falhar */
   onImageError(dish: Dish): void {
-    console.error(
-      'DishListComponent: Image failed to load for dish:',
-      dish.name,
-      'URL:',
-      dish.imageUrl
-    );
+    (dish as any).imageUrl = '';
+  }
+
+  /** Converte valores legados EN -> PT-BR para exibição */
+  getCategoriaPt(cat: string): string {
+    switch (cat) {
+      case 'Main Course':
+        return 'Pratos';
+      case 'Drink':
+        return 'Bebidas';
+      case 'Dessert':
+        return 'Sobremesas';
+      default:
+        return cat;
+    }
   }
 }

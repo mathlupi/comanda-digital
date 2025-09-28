@@ -13,7 +13,7 @@ export interface Order {
   customerName: string;
   customerAddress: string;
   totalPrice: number;
-  status: string;
+  status: string; // PT-BR: Pendente, Em produção, Pronto, Motoboy a caminho, Entregue, Cancelado
   dishIds: number[];
   quantities: number[];
   selectedIngredients?: DishIngredients[];
@@ -21,16 +21,13 @@ export interface Order {
   updatedAt?: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrderService {
   private apiUrl = 'http://localhost:8080/orders';
 
   constructor(private http: HttpClient) {}
 
   createOrder(order: Order): Observable<Order> {
-    console.log('Enviando POST para:', this.apiUrl, 'com payload:', order);
     return this.http
       .post<Order>(this.apiUrl, order)
       .pipe(catchError(this.handleError));
@@ -62,14 +59,12 @@ export class OrderService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('Erro na requisição:', error);
-    let errorMessage = 'Ocorreu um erro desconhecido.';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Erro no cliente: ${error.error.message}`;
-    } else {
-      errorMessage = `Erro no servidor: ${error.status} - ${
-        error.message || error.error || 'Sem detalhes'
-      }`;
-    }
-    return throwError(() => new Error(errorMessage));
+    const msg =
+      error.error instanceof ErrorEvent
+        ? `Erro no cliente: ${error.error.message}`
+        : `Erro no servidor: ${error.status} - ${
+            error.message || error.error || 'Sem detalhes'
+          }`;
+    return throwError(() => new Error(msg));
   }
 }

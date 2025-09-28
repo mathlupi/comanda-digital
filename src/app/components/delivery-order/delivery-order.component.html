@@ -5,14 +5,14 @@
       [ngClass]="activeTab === 'ready' ? 'tab-active' : 'tab-inactive'"
       (click)="setActiveTab('ready')"
     >
-      Prontos para Retirada
+      Prontos para retirada
     </button>
     <button
       class="px-4 py-2"
       [ngClass]="activeTab === 'inTransit' ? 'tab-active' : 'tab-inactive'"
       (click)="setActiveTab('inTransit')"
     >
-      A Caminho
+      A caminho
     </button>
     <button
       class="px-4 py-2"
@@ -23,66 +23,66 @@
     </button>
   </div>
 
-  <!-- Ready Orders -->
+  <!-- Prontos -->
   <div *ngIf="activeTab === 'ready'">
     <h2 class="text-2xl font-bold mb-4 text-maroon-700">
-      Pedidos Prontos para Retirada
+      Pedidos prontos para retirada
     </h2>
     <div *ngIf="readyOrders.length === 0" class="text-gray-500">
       Nenhum pedido pronto.
     </div>
     <div
       *ngFor="let order of readyOrders"
-      class="border p-4 mb-2 rounded shadow"
+      class="border p-4 mb-2 rounded shadow bg-white"
     >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
       <button
         class="btn-maroon"
-        (click)="setStatus(order.id!, 'Motoboy a Caminho')"
+        (click)="setStatus(order.id!, 'Motoboy a caminho')"
       >
-        Retirar Pedido
+        Retirar pedido
       </button>
     </div>
   </div>
 
-  <!-- In Transit Orders -->
+  <!-- A caminho -->
   <div *ngIf="activeTab === 'inTransit'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos a Caminho</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos a caminho</h2>
     <div *ngIf="inTransitOrders.length === 0" class="text-gray-500">
       Nenhum pedido a caminho.
     </div>
     <div
       *ngFor="let order of inTransitOrders"
-      class="border p-4 mb-2 rounded shadow"
+      class="border p-4 mb-2 rounded shadow bg-white"
     >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
-      <button class="btn-maroon" (click)="setStatus(order.id!, 'Delivered')">
-        Marcar como Entregue
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
+      <button class="btn-maroon" (click)="setStatus(order.id!, 'Entregue')">
+        Marcar como entregue
       </button>
     </div>
   </div>
 
-  <!-- Delivered Orders -->
+  <!-- Entregues -->
   <div *ngIf="activeTab === 'delivered'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos Entregues</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos entregues</h2>
     <div *ngIf="deliveredOrders.length === 0" class="text-gray-500">
       Nenhum pedido entregue.
     </div>
     <div
       *ngFor="let order of deliveredOrders"
-      class="border p-4 mb-2 rounded shadow"
+      class="border p-4 mb-2 rounded shadow bg-white"
     >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
     </div>
-    <p class="font-bold mt-4">Ganhos Totais: R${{ earnings.toFixed(2) }}</p>
+    <p class="font-bold mt-4">Ganhos totais: R$ {{ earnings.toFixed(2) }}</p>
   </div>
 </div>

@@ -12,7 +12,7 @@
       [ngClass]="activeTab === 'inProduction' ? 'tab-active' : 'tab-inactive'"
       (click)="setActiveTab('inProduction')"
     >
-      Em Produção
+      Em produção
     </button>
     <button
       class="px-4 py-2"
@@ -30,83 +30,92 @@
     </button>
   </div>
 
-  <!-- Pending Orders -->
+  <!-- Pendentes -->
   <div *ngIf="activeTab === 'pending'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos Pendentes</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos pendentes</h2>
     <div *ngIf="orders.length === 0" class="text-gray-500">
       Nenhum pedido pendente.
     </div>
-    <div *ngFor="let order of orders" class="border p-4 mb-2 rounded shadow">
+    <div
+      *ngFor="let order of orders"
+      class="border p-4 mb-2 rounded shadow bg-white"
+    >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
       <button
         class="btn-maroon mr-2"
-        (click)="setStatus(order.id!, 'In Production')"
+        (click)="setStatus(order.id!, 'Em produção')"
       >
-        Iniciar Produção
+        Iniciar produção
       </button>
       <button
         class="btn-maroon bg-red-700"
-        (click)="setStatus(order.id!, 'Canceled')"
+        (click)="setStatus(order.id!, 'Cancelado')"
       >
         Cancelar
       </button>
     </div>
   </div>
 
-  <!-- In Production Orders -->
+  <!-- Em Produção -->
   <div *ngIf="activeTab === 'inProduction'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos em Produção</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos em produção</h2>
     <div *ngIf="inProduction.length === 0" class="text-gray-500">
       Nenhum pedido em produção.
     </div>
     <div
       *ngFor="let order of inProduction"
-      class="border p-4 mb-2 rounded shadow"
+      class="border p-4 mb-2 rounded shadow bg-white"
     >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
-      <button class="btn-maroon mr-2" (click)="setStatus(order.id!, 'Ready')">
-        Marcar como Pronto
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
+      <button class="btn-maroon mr-2" (click)="setStatus(order.id!, 'Pronto')">
+        Marcar como pronto
       </button>
       <button
         class="btn-maroon bg-red-700"
-        (click)="setStatus(order.id!, 'Canceled')"
+        (click)="setStatus(order.id!, 'Cancelado')"
       >
         Cancelar
       </button>
     </div>
   </div>
 
-  <!-- Ready Orders -->
+  <!-- Prontos -->
   <div *ngIf="activeTab === 'ready'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos Prontos</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos prontos</h2>
     <div *ngIf="ready.length === 0" class="text-gray-500">
       Nenhum pedido pronto.
     </div>
-    <div *ngFor="let order of ready" class="border p-4 mb-2 rounded shadow">
+    <div
+      *ngFor="let order of ready"
+      class="border p-4 mb-2 rounded shadow bg-white"
+    >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
     </div>
   </div>
 
-  <!-- Canceled Orders -->
+  <!-- Cancelados -->
   <div *ngIf="activeTab === 'canceled'">
-    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos Cancelados</h2>
+    <h2 class="text-2xl font-bold mb-4 text-maroon-700">Pedidos cancelados</h2>
     <div *ngIf="canceled.length === 0" class="text-gray-500">
       Nenhum pedido cancelado.
     </div>
-    <div *ngFor="let order of canceled" class="border p-4 mb-2 rounded shadow">
+    <div
+      *ngFor="let order of canceled"
+      class="border p-4 mb-2 rounded shadow bg-white"
+    >
       <p>Pedido ID: {{ order.id }}</p>
       <p>Cliente: {{ order.customerName }}</p>
       <p>Endereço: {{ order.customerAddress }}</p>
-      <p>Total: R${{ order.totalPrice.toFixed(2) }}</p>
+      <p>Total: R$ {{ order.totalPrice.toFixed(2) }}</p>
     </div>
   </div>
 </div>

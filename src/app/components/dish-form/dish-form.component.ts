@@ -17,7 +17,7 @@ export class DishFormComponent implements OnInit {
     name: '',
     description: '',
     price: 0,
-    category: 'Main Course',
+    category: 'Pratos',
     ingredients: '',
   };
   ingredientInput: string = '';
@@ -35,11 +35,7 @@ export class DishFormComponent implements OnInit {
 
   ngOnInit(): void {
     const userRole = sessionStorage.getItem('userRole');
-    console.log('DishFormComponent: User role:', userRole ?? 'null');
     if (userRole !== 'Admin') {
-      console.log(
-        'DishFormComponent: Redirecting to /admin/login due to invalid role'
-      );
       this.router.navigate(['/admin/login']);
       return;
     }
@@ -54,9 +50,8 @@ export class DishFormComponent implements OnInit {
             ? dish.ingredients
                 .split(',')
                 .map((i) => i.trim())
-                .filter((i) => i)
+                .filter(Boolean)
             : [];
-          console.log('DishFormComponent: Editing dish:', dish);
         },
         error: (err) => {
           this.errorMessage = `Erro ao carregar prato: ${err.message}`;
@@ -90,19 +85,28 @@ export class DishFormComponent implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
 
-    const saveDish = (imageUrl?: string) => {
-      const dishToSave: Dish = { ...this.dish, imageUrl };
-      console.log('DishFormComponent: Saving dish:', dishToSave);
+    const saveDish = (uploadedUrl?: string) => {
+      // Clona o prato atual
+      const dishToSave: Dish = { ...this.dish };
+
+      // Se houve upload, aplica o novo caminho
+      if (uploadedUrl && uploadedUrl.trim()) {
+        dishToSave.imageUrl = uploadedUrl.trim();
+      }
+      // Se não houve upload:
+      // - em edição: mantém o imageUrl existente (já está em dishToSave)
+      // - em criação: fica sem imageUrl (ok)
+
       const request = this.isEditMode
         ? this.dishService.updateDish(this.dish.id, dishToSave)
         : this.dishService.createDish(dishToSave);
+
       request.subscribe({
         next: (dish) => {
           this.successMessage = `Prato ${
             this.isEditMode ? 'atualizado' : 'salvo'
           } com sucesso!`;
-          this.resetForm();
-          console.log('DishFormComponent: Prato salvo:', dish);
+          this.resetForm(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           this.router.navigate(['/admin']);
         },
         error: (err) => {
@@ -113,37 +117,36 @@ export class DishFormComponent implements OnInit {
     };
 
     if (this.selectedFile) {
-      console.log(
-        'DishFormComponent: Uploading image:',
-        this.selectedFile.name
-      );
+      // Faz upload e depois salva com o novo URL
       this.dishService.uploadImage(this.selectedFile).subscribe({
-        next: (imageUrl) => {
-          console.log('DishFormComponent: Imagem enviada:', imageUrl);
-          saveDish(imageUrl);
-        },
+        next: (imageUrl) => saveDish(imageUrl),
         error: (err) => {
           this.errorMessage = `Erro ao fazer upload da imagem: ${err.message}`;
           console.error('DishFormComponent: Erro no upload da imagem:', err);
-          saveDish(); // Proceed without image
+          // Continua salvando sem alterar o imageUrl
+          saveDish();
         },
       });
     } else {
+      // Não há novo arquivo — salva mantendo o imageUrl atual
       saveDish();
     }
   }
+
+  /** Reseta o formulário para estado inicial */
   resetForm(): void {
     this.dish = {
       id: 0,
       name: '',
       description: '',
       price: 0,
-      category: 'Main Course',
+      category: 'Pratos',
       ingredients: '',
     };
     this.ingredientInput = '';
     this.selectedFile = null;
     this.ingredientsList = [];
+    // Se quiser voltar para modo de criação após atualizar:
     this.isEditMode = false;
   }
 }

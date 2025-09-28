@@ -1,0 +1,4 @@
+/* Estilos simples só para garantir que o loader receba uma string válida */
+:host {
+  display: block;
+}

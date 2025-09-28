@@ -1,33 +1,51 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --maroon: #e71f11;
-}
-
-body {
-  background-color: #ffffff;
-  color: #333333;
-  font-family: "Arial", sans-serif;
-}
-
-.bg-maroon-700 {
-  background-color: var(--maroon);
-}
-
+/* Paleta e utilitários simples */
 .text-maroon-700 {
-  color: var(--maroon);
+  color: #7b1c1c;
+}
+.bg-maroon-700 {
+  background-color: #7b1c1c;
+}
+.bg-maroon-800 {
+  background-color: #671717;
 }
 
 .btn-maroon {
-  @apply bg-maroon-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-maroon-800 transition duration-200;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #7b1c1c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s ease, background-color 0.2s ease;
+}
+.btn-maroon:hover {
+  background-color: #671717;
+  transform: translateY(-1px);
 }
 
 .tab-active {
-  @apply bg-maroon-700 text-white border-b-2 border-maroon-700;
+  border-bottom: 2px solid #7b1c1c;
+  color: #7b1c1c;
+  font-weight: 600;
+}
+.tab-inactive {
+  color: #4b5563;
 }
 
-.tab-inactive {
-  @apply text-gray-600 hover:text-maroon-700 hover:border-b-2 hover:border-maroon-700;
+.img-card {
+  width: 100%;
+  object-fit: cover;
+  aspect-ratio: 4/3;
+  background: #f3f4f6;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.card:hover {
+  transform: scale(1.02);
 }
