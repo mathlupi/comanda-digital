@@ -9,7 +9,7 @@ import { FilterByCategoryPipe } from '../../pipes/filter-by-category.pipe';
 
 registerLocaleData(localePt);
 
-interface CartItem {
+interface ItemCarrinho {
   dish: Dish;
   quantity: number;
   selectedIngredients: string[];
@@ -24,21 +24,42 @@ interface CartItem {
   providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
 })
 export class CustomerOrderComponent implements OnInit, OnDestroy {
+  // Estado de navegação
   activeTab = 'menu';
   menuCategory: Dish['category'] = 'Pratos';
+
+  // Dados do menu e carrinho
   dishes: Dish[] = [];
-  cart: CartItem[] = [];
+  cart: ItemCarrinho[] = [];
   quantities: { [key: number]: number } = {};
   selectedIngredients: { [key: number]: { [ingredient: string]: boolean } } =
     {};
+
+  // Dados do cliente e pedido
   customerName: string = sessionStorage.getItem('username') || '';
   customerAddress: string = '';
   orderStatus: string | null = null;
-  errorMessage: string | null = null;
   showTracking = false;
   currentOrderId: number | null = null;
+
+  // Histórico e mensagens
   orderHistory: Order[] = [];
+  errorMessage: string | null = null;
+
+  // Polling
   private pollingInterval: any;
+
+  // Linha do tempo (stepper)
+  private readonly ORDEM_ETAPAS = [
+    'Pendente', // 0 - Pedido feito
+    'Em produção', // 1
+    'Pronto', // 2
+    'Aguardando motoboy', // 3 (visual - deriva de "Pronto")
+    'Motoboy a caminho', // 4
+    'Entregue', // 5
+  ] as const;
+
+  historicoStatus: Array<{ status: string; at: Date }> = [];
 
   constructor(
     private dishService: DishService,
@@ -46,21 +67,23 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
+  // ===== Ciclo de vida =====
   ngOnInit(): void {
     const userRole = sessionStorage.getItem('userRole');
     if (userRole !== 'Client') {
       this.router.navigate(['/client/login']);
       return;
     }
-    this.loadDishes();
-    this.loadOrderHistory();
+    this.carregarCardapio();
+    this.carregarHistoricoPedidos();
   }
 
   ngOnDestroy(): void {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
   }
 
-  private normalizeCategory(cat: string): Dish['category'] {
+  // ===== Normalizações =====
+  private normalizarCategoria(cat: string): Dish['category'] {
     switch (cat) {
       case 'Main Course':
         return 'Pratos';
@@ -73,21 +96,21 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadDishes(): void {
+  // ===== Cardápio =====
+  carregarCardapio(): void {
     this.dishService.getDishes().subscribe({
       next: (data: Dish[]) => {
-        // Normaliza categoria e garante ingredients string
         this.dishes = data.map((d) => ({
           ...d,
-          category: this.normalizeCategory(d.category),
+          category: this.normalizarCategoria(d.category),
           ingredients: d.ingredients || '',
         }));
 
-        // Inicializa quantidades e ingredientes selecionados
+        // Inicializa quantidades e seleção de ingredientes
         this.dishes.forEach((dish) => {
           this.quantities[dish.id] = 1;
           this.selectedIngredients[dish.id] = {};
-          this.getIngredientsArray(dish).forEach((ing) => {
+          this.obterIngredientesArray(dish).forEach((ing) => {
             this.selectedIngredients[dish.id][ing] = true;
           });
         });
@@ -97,7 +120,7 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     });
   }
 
-  getIngredientsArray(dish: Dish): string[] {
+  obterIngredientesArray(dish: Dish): string[] {
     return dish.ingredients
       ? dish.ingredients
           .split(',')
@@ -106,14 +129,16 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
       : [];
   }
 
-  loadOrderHistory(): void {
+  // ===== Histórico do cliente =====
+  carregarHistoricoPedidos(): void {
     if (!this.customerName) return;
     this.orderService.getOrdersByCustomerName(this.customerName).subscribe({
       next: (orders) => (this.orderHistory = orders),
     });
   }
 
-  updateIngredientSelection(
+  // ===== Seleção de ingredientes =====
+  atualizarSelecaoIngrediente(
     dishId: number,
     ingredient: string,
     checked: boolean
@@ -123,48 +148,58 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     this.selectedIngredients[dishId][ingredient] = checked;
   }
 
-  addToCart(dish: Dish): void {
+  // ===== Carrinho =====
+  adicionarAoCarrinho(dish: Dish): void {
     if (!this.quantities[dish.id] || this.quantities[dish.id] <= 0) {
       this.errorMessage = 'Selecione uma quantidade válida.';
       return;
     }
-    const selected = Object.keys(this.selectedIngredients[dish.id]).filter(
+    const selecionados = Object.keys(this.selectedIngredients[dish.id]).filter(
       (k) => this.selectedIngredients[dish.id][k]
     );
-    const existing = this.cart.find(
+
+    const existente = this.cart.find(
       (it) =>
         it.dish.id === dish.id &&
-        JSON.stringify(it.selectedIngredients) === JSON.stringify(selected)
+        JSON.stringify(it.selectedIngredients) === JSON.stringify(selecionados)
     );
-    if (existing) existing.quantity += this.quantities[dish.id];
-    else
+
+    if (existente) {
+      existente.quantity += this.quantities[dish.id];
+    } else {
       this.cart.push({
         dish,
         quantity: this.quantities[dish.id],
-        selectedIngredients: selected,
+        selectedIngredients: selecionados,
       });
+    }
+
     this.quantities[dish.id] = 1;
     this.errorMessage = null;
   }
 
-  removeFromCart(index: number): void {
+  removerDoCarrinho(index: number): void {
     this.cart.splice(index, 1);
   }
-  updateQuantity(index: number, q: number): void {
-    q <= 0 ? this.removeFromCart(index) : (this.cart[index].quantity = q);
+
+  atualizarQuantidade(index: number, q: number): void {
+    q <= 0 ? this.removerDoCarrinho(index) : (this.cart[index].quantity = q);
   }
-  getTotalPrice(): number {
+
+  obterPrecoTotal(): number {
     return this.cart.reduce((t, it) => t + it.dish.price * it.quantity, 0);
   }
-  getCartCount(): number {
+
+  obterQuantidadeCarrinho(): number {
     return this.cart.reduce((sum, it) => sum + it.quantity, 0);
   }
 
-  confirmPayment(): void {
-    if (confirm('Confirmar pagamento do pedido?')) this.placeOrder();
+  // ===== Checkout =====
+  confirmarPagamento(): void {
+    if (confirm('Confirmar pagamento do pedido?')) this.fazerPedido();
   }
 
-  placeOrder(): void {
+  fazerPedido(): void {
     if (!this.customerName || !this.customerAddress) {
       this.errorMessage = 'Por favor, insira seu nome e endereço.';
       return;
@@ -173,10 +208,11 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
       this.errorMessage = 'Seu carrinho está vazio.';
       return;
     }
+
     const order: Order = {
       customerName: this.customerName,
       customerAddress: this.customerAddress,
-      totalPrice: this.getTotalPrice(),
+      totalPrice: this.obterPrecoTotal(),
       status: 'Pendente',
       dishIds: this.cart.map((i) => i.dish.id),
       quantities: this.cart.map((i) => i.quantity),
@@ -187,21 +223,30 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     };
 
     this.orderService.createOrder(order).subscribe({
-      next: (newOrder) => {
+      next: (novoPedido) => {
         this.cart = [];
-        this.orderStatus = newOrder.status;
-        this.currentOrderId = newOrder.id ?? null;
+        this.orderStatus = novoPedido.status;
+        this.currentOrderId = novoPedido.id ?? null;
         this.showTracking = true;
         this.errorMessage = null;
-        this.setActiveTab('track');
-        this.loadOrderHistory();
+        this.definirAbaAtiva('track');
+        this.carregarHistoricoPedidos();
+
+        // Inicializa histórico com "Pendente"
+        this.historicoStatus = [];
+        const created = novoPedido.createdAt
+          ? new Date(novoPedido.createdAt)
+          : new Date();
+        this.historicoStatus.push({ status: 'Pendente', at: created });
+
+        // Inicia polling
         this.pollingInterval = setInterval(() => {
-          this.orderService.getOrder(newOrder.id!).subscribe({
+          this.orderService.getOrder(novoPedido.id!).subscribe({
             next: (u) => {
-              this.orderStatus = u.status;
+              this.atualizarEstadoRastreamento(u);
               if (u.status === 'Entregue') {
                 clearInterval(this.pollingInterval);
-                this.loadOrderHistory();
+                this.carregarHistoricoPedidos();
               }
             },
           });
@@ -212,14 +257,77 @@ export class CustomerOrderComponent implements OnInit, OnDestroy {
     });
   }
 
-  setActiveTab(tab: string): void {
+  // ===== Linha do tempo (stepper) =====
+  private obterIndiceEtapaAtual(status: string | null): number {
+    if (!status) return 0;
+    if (status === 'Pronto') return 3; // “Aguardando motoboy” (visual)
+    const idx = this.ORDEM_ETAPAS.indexOf(status as any);
+    return idx >= 0 ? idx : 0;
+  }
+
+  etapaConcluida(idx: number): boolean {
+    const atual = this.obterIndiceEtapaAtual(this.orderStatus);
+    return idx < atual;
+  }
+
+  etapaAtual(idx: number): boolean {
+    const atual = this.obterIndiceEtapaAtual(this.orderStatus);
+    return idx === atual;
+  }
+
+  obterRotuloEtapa(idx: number): string {
+    const rotulos = [
+      'Pedido feito',
+      'Em produção',
+      'Pronto',
+      'Aguardando motoboy',
+      'A caminho',
+      'Entregue',
+    ];
+    return rotulos[idx] ?? '';
+  }
+
+  obterHorarioEtapa(idx: number): string | null {
+    const mapa = [
+      'Pendente',
+      'Em produção',
+      'Pronto',
+      'Pronto', // “Aguardando motoboy” usa o mesmo timestamp de “Pronto”
+      'Motoboy a caminho',
+      'Entregue',
+    ];
+    const alvo = mapa[idx];
+    const hit = [...this.historicoStatus]
+      .reverse()
+      .find((h) => h.status === alvo);
+    return hit ? hit.at.toLocaleString() : null;
+  }
+
+  private atualizarEstadoRastreamento(u: Order): void {
+    const anterior = this.orderStatus;
+    this.orderStatus = u.status;
+
+    if (!this.historicoStatus.length) {
+      const firstWhen = u.createdAt ? new Date(u.createdAt) : new Date();
+      this.historicoStatus.push({ status: 'Pendente', at: firstWhen });
+    }
+
+    if (anterior !== this.orderStatus) {
+      const quando = u.updatedAt ? new Date(u.updatedAt) : new Date();
+      this.historicoStatus.push({ status: this.orderStatus!, at: quando });
+    }
+  }
+
+  // ===== UI =====
+  definirAbaAtiva(tab: string): void {
     this.activeTab = tab;
   }
-  setMenuCategory(category: Dish['category']): void {
+
+  definirCategoriaMenu(category: Dish['category']): void {
     this.menuCategory = category;
   }
 
-  onImageError(dish: Dish): void {
+  aoErroDeImagem(dish: Dish): void {
     (dish as any).imageUrl = '';
   }
 }

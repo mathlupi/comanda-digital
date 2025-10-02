@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, LOCALE_ID } from '@angular/core';
-import { OrderService, Order } from '../../services/order.service';
-import { CommonModule, registerLocaleData } from '@angular/common';
-import localePt from '@angular/common/locales/pt';
-
-registerLocaleData(localePt);
+import { CommonModule } from '@angular/common';
+import {
+  OrderService,
+  Order,
+  DishIngredients,
+} from '../../services/order.service';
+import { DishService, Dish } from '../../services/dish.service';
 
 @Component({
   selector: 'app-delivery-order',
@@ -14,17 +16,33 @@ registerLocaleData(localePt);
 })
 export class DeliveryOrderComponent implements OnInit, OnDestroy {
   activeTab = 'ready';
-  readyOrders: Order[] = [];
-  inTransitOrders: Order[] = [];
-  deliveredOrders: Order[] = [];
-  earnings = 0;
-  private pollingInterval: any;
 
-  constructor(private orderService: OrderService) {}
+  // ViewModels com itens resolvidos:
+  readyOrders: OrderVM[] = [];
+  inTransitOrders: OrderVM[] = [];
+  deliveredOrders: OrderVM[] = [];
+  earnings = 0;
+
+  private pollingInterval: any;
+  private dishById = new Map<number, Dish>();
+  private dishesLoaded = false;
+
+  constructor(
+    private orderService: OrderService,
+    private dishService: DishService
+  ) {}
 
   ngOnInit(): void {
-    this.loadOrders();
-    this.pollingInterval = setInterval(() => this.loadOrders(), 10000);
+    // Carrega os pratos uma única vez para mapear dishId -> Dish
+    this.dishService.getDishes().subscribe({
+      next: (dishes) => {
+        this.dishById = new Map(dishes.map((d) => [d.id, d]));
+        this.dishesLoaded = true;
+        this.loadOrders();
+        this.pollingInterval = setInterval(() => this.loadOrders(), 10000);
+      },
+      error: (err) => console.error('Erro ao carregar pratos:', err),
+    });
   }
 
   ngOnDestroy(): void {
@@ -32,16 +50,23 @@ export class DeliveryOrderComponent implements OnInit, OnDestroy {
   }
 
   loadOrders(): void {
+    if (!this.dishesLoaded) return;
+
     this.orderService.getOrders().subscribe({
       next: (orders) => {
-        const newReadyOrders = orders.filter((o) => o.status === 'Pronto');
-        if (newReadyOrders.length > this.readyOrders.length)
-          this.notifyNewOrder();
-        this.readyOrders = newReadyOrders;
-        this.inTransitOrders = orders.filter(
+        const vms = orders.map((o) => this.enrichOrder(o));
+        const newReady = vms.filter((o) => o.status === 'Pronto');
+
+        // Notificação quando chegar pedido novo na aba "Prontos"
+        if (newReady.length > this.readyOrders.length) this.notifyNewOrder();
+
+        this.readyOrders = newReady;
+        this.inTransitOrders = vms.filter(
           (o) => o.status === 'Motoboy a caminho'
         );
-        this.deliveredOrders = orders.filter((o) => o.status === 'Entregue');
+        this.deliveredOrders = vms.filter((o) => o.status === 'Entregue');
+
+        // Ex.: taxa fixa de R$5 por entrega concluída (ajuste conforme sua regra)
         this.earnings = this.deliveredOrders.length * 5;
       },
       error: (err) => console.error('Erro ao carregar pedidos:', err),
@@ -91,4 +116,58 @@ export class DeliveryOrderComponent implements OnInit, OnDestroy {
   setActiveTab(tab: string): void {
     this.activeTab = tab;
   }
+
+  // ----- Helpers de projeção -----
+  private enrichOrder(order: Order): OrderVM {
+    const items: OrderItemVM[] = [];
+
+    for (let i = 0; i < order.dishIds.length; i++) {
+      const dishId = order.dishIds[i];
+      const quantity = order.quantities[i] ?? 1;
+      const dish = this.dishById.get(dishId);
+      if (!dish) continue;
+
+      const sel: DishIngredients | undefined = order.selectedIngredients?.find(
+        (s) => s.dishId === dishId
+      );
+
+      items.push({
+        dish,
+        quantity,
+        ingredients: sel?.ingredients?.length
+          ? sel.ingredients
+          : this.splitIngredients(dish.ingredients),
+        customized: !!sel?.ingredients?.length,
+      });
+    }
+
+    const totalItems = items.reduce((acc, it) => acc + it.quantity, 0);
+
+    return { ...order, items, totalItems };
+  }
+
+  private splitIngredients(ing: string | undefined): string[] {
+    if (!ing) return [];
+    return ing
+      .split(/[,;/\n]/g)
+      .map((s) => s.trim())
+      .filter((s) => !!s);
+  }
+
+  trackByOrder = (_: number, o: OrderVM) => o.id;
+  trackByItem = (_: number, it: OrderItemVM) =>
+    `${it.dish.id}-${it.quantity}-${it.customized}`;
 }
+
+// ---- ViewModels ----
+export type OrderItemVM = {
+  dish: Dish;
+  quantity: number;
+  ingredients: string[];
+  customized: boolean;
+};
+
+export type OrderVM = Order & {
+  items: OrderItemVM[];
+  totalItems: number;
+};

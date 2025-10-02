@@ -1,0 +1,117 @@
+<div class="container mx-auto p-4">
+  <div class="mb-4 flex flex-wrap gap-2">
+    <a routerLink="/admin" class="btn-maroon">↩ Voltar à lista de pratos</a>
+    <a routerLink="/admin/add-dish" class="btn-maroon">+ Novo prato</a>
+  </div>
+
+  <h2 class="text-2xl font-bold mb-4 text-maroon-700">
+    Dashboard — Visão geral
+  </h2>
+
+  <div *ngIf="carregando" class="text-gray-600">Carregando dados…</div>
+  <div *ngIf="erro" class="text-red-600">{{ erro }}</div>
+
+  <div *ngIf="!carregando && !erro">
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-gray-500 text-sm">Total de pedidos</div>
+        <div class="text-2xl font-bold">{{ totalPedidos }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-gray-500 text-sm">Faturamento total</div>
+        <div class="text-2xl font-bold">
+          R$ {{ faturamentoTotal.toFixed(2) }}
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-gray-500 text-sm">Pedidos hoje</div>
+        <div class="text-2xl font-bold">{{ pedidosHoje }}</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-gray-500 text-sm">Faturamento hoje</div>
+        <div class="text-2xl font-bold">
+          R$ {{ faturamentoHoje.toFixed(2) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Por status -->
+    <h3 class="text-xl font-semibold mb-2 text-gray-800">Pedidos por status</h3>
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-6"
+    >
+      <!-- ✅ keyvalue pipe no lugar de Object.keys(...) -->
+      <div
+        class="bg-white rounded-xl shadow p-4"
+        *ngFor="let kv of porStatus | keyvalue"
+      >
+        <div class="text-gray-500 text-sm">{{ kv.key }}</div>
+        <div class="text-2xl font-bold">{{ kv.value }}</div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Pedidos por dia -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-baseline justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-800">
+            Pedidos por dia (14d)
+          </h3>
+          <div class="text-sm text-gray-500">máx: {{ maxOrders() }}</div>
+        </div>
+        <div class="h-48 flex items-end gap-2 border-t border-gray-200 pt-2">
+          <div
+            *ngFor="let d of serieDias"
+            class="flex-1 flex flex-col items-center justify-end"
+          >
+            <div
+              class="w-4 sm:w-5 bg-maroon-700 rounded-t"
+              [style.height]="alturaBarraOrders(d.orders)"
+              title="{{ d.orders }} pedidos em {{ labelDia(d.date) }}"
+            ></div>
+            <div class="text-[10px] text-gray-500 mt-1">
+              {{ labelDia(d.date) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Faturamento por dia -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-baseline justify-between mb-2">
+          <h3 class="text-lg font-semibold text-gray-800">
+            Faturamento por dia (14d)
+          </h3>
+          <div class="text-sm text-gray-500">
+            máx: R$ {{ maxRevenue().toFixed(2) }}
+          </div>
+        </div>
+        <div class="h-48 flex items-end gap-2 border-t border-gray-200 pt-2">
+          <div
+            *ngFor="let d of serieDias"
+            class="flex-1 flex flex-col items-center justify-end"
+          >
+            <div
+              class="w-4 sm:w-5 bg-green-600 rounded-t"
+              [style.height]="alturaBarraRevenue(d.revenue)"
+              title="R$ {{ d.revenue.toFixed(2) }} em {{ labelDia(d.date) }}"
+            ></div>
+            <div class="text-[10px] text-gray-500 mt-1">
+              {{ labelDia(d.date) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="mt-6 flex flex-wrap gap-2">
+      <a routerLink="/admin" class="btn-maroon">Gerenciar cardápio</a>
+      <a routerLink="/admin/add-dish" class="btn-maroon"
+        >Adicionar novo prato</a
+      >
+    </div>
+  </div>
+</div>

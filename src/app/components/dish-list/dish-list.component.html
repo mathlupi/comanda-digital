@@ -1,11 +1,9 @@
 <div class="container mx-auto p-4">
   <h2 class="text-2xl font-bold mb-4 text-maroon-700">Lista de Pratos</h2>
 
-  <button class="btn-maroon mb-4" (click)="addNewDish()">
+  <button class="btn-maroon mb-4" (click)="addDish()">
     Adicionar Novo Prato
   </button>
-
-  <div *ngIf="errorMessage" class="text-red-500 mb-4">{{ errorMessage }}</div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <div
@@ -17,7 +15,6 @@
         [src]="dish.imageUrl"
         alt="{{ dish.name }}"
         class="w-full h-48 object-cover"
-        (error)="onImageError(dish)"
       />
       <ng-template #noImg>
         <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -30,7 +27,6 @@
         <p class="text-gray-600">{{ dish.description }}</p>
         <p class="font-bold text-maroon-700">R$ {{ dish.price.toFixed(2) }}</p>
 
-        <p>Categoria: {{ getCategoriaPt(dish.category) }}</p>
         <p>Ingredientes: {{ dish.ingredients || "Nenhum" }}</p>
 
         <div class="mt-2 flex gap-2">

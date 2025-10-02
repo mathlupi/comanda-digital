@@ -16,9 +16,13 @@ export class AdminComponent implements OnInit {
     name: '',
     description: '',
     price: 0,
-    category: 'Main Course',
+    // Se preferir padronizar já no front, deixe em PT-BR:
+    // category: 'Pratos',
+    // Se quiser manter como estava e mapear na hora de salvar, use o original:
+    category: 'Pratos',
     ingredients: '',
   };
+
   ingredientInput: string = '';
   errorMessage: string | null = null;
   successMessage: string | null = null;
@@ -29,7 +33,7 @@ export class AdminComponent implements OnInit {
 
   ngOnInit(): void {
     const userRole = sessionStorage.getItem('userRole');
-    console.log('AdminComponent: User role:', userRole); // Debug log
+    console.log('AdminComponent: User role:', userRole);
     if (userRole !== 'Admin') {
       console.log(
         'AdminComponent: Redirecting to /admin/login due to invalid role'
@@ -49,6 +53,7 @@ export class AdminComponent implements OnInit {
     if (this.ingredientInput.trim()) {
       this.ingredientsList.push(this.ingredientInput.trim());
       this.ingredientInput = '';
+      // mantém sincronizado com o model, se você usa em outros lugares
       this.dish.ingredients = this.ingredientsList.join(',');
     }
   }
@@ -58,19 +63,53 @@ export class AdminComponent implements OnInit {
     this.dish.ingredients = this.ingredientsList.join(',');
   }
 
+  // Mapeia categoria do formulário para o formato aceito pelo backend
+  private mapCategoriaParaServidor(
+    cat: string
+  ): 'Pratos' | 'Bebidas' | 'Sobremesas' {
+    switch (cat) {
+      case 'Main Course':
+        return 'Pratos';
+      case 'Drink':
+        return 'Bebidas';
+      case 'Dessert':
+        return 'Sobremesas';
+      default:
+        // Se já vier em PT-BR, mantém
+        return cat as any;
+    }
+  }
+
   saveDish(): void {
     this.errorMessage = null;
     this.successMessage = null;
 
-    const saveDish = (imageUrl?: string) => {
-      const dishToSave: Dish = { ...this.dish, imageUrl };
-      console.log('Saving dish:', dishToSave); // Debug log
-      this.dishService.createDish(dishToSave).subscribe({
+    const montarPayload = (imageUrl?: string) => {
+      const categoriaServidor = this.mapCategoriaParaServidor(
+        this.dish.category
+      );
+
+      // Monta payload limpo (sem id no create e sem ingredients vazio)
+      const payload: any = {
+        name: this.dish.name,
+        description: this.dish.description,
+        price: this.dish.price,
+        category: categoriaServidor,
+        ...(imageUrl ? { imageUrl } : {}),
+      };
+
+      const ingredientesStr = (this.ingredientsList || []).join(',').trim();
+      if (ingredientesStr) {
+        payload.ingredients = ingredientesStr;
+      }
+
+      console.log('Saving dish (payload):', payload);
+      this.dishService.createDish(payload).subscribe({
         next: (dish) => {
           this.successMessage = 'Prato salvo com sucesso!';
           this.resetForm();
           console.log('Prato salvo:', dish);
-          this.router.navigate(['/admin']); // Redirect to dish list after saving
+          this.router.navigate(['/admin/dishes']); // volta para a lista
         },
         error: (err) => {
           this.errorMessage = `Erro ao salvar prato: ${err.message}`;
@@ -80,20 +119,20 @@ export class AdminComponent implements OnInit {
     };
 
     if (this.selectedFile) {
-      console.log('Uploading image:', this.selectedFile.name); // Debug log
+      console.log('Uploading image:', this.selectedFile.name);
       this.dishService.uploadImage(this.selectedFile).subscribe({
         next: (imageUrl) => {
           console.log('Imagem enviada:', imageUrl);
-          saveDish(imageUrl);
+          montarPayload(imageUrl);
         },
         error: (err) => {
-          this.errorMessage = `Erro ao fazer upload da imagem: ${err.message}`;
           console.error('Erro no upload da imagem:', err);
-          saveDish(); // Proceed without image
+          // Prossegue sem imagem
+          montarPayload();
         },
       });
     } else {
-      saveDish();
+      montarPayload();
     }
   }
 
@@ -103,7 +142,9 @@ export class AdminComponent implements OnInit {
       name: '',
       description: '',
       price: 0,
-      category: 'Main Course',
+      // Se quiser já padronizar para PT-BR:
+      // category: 'Pratos',
+      category: 'Pratos',
       ingredients: '',
     };
     this.ingredientInput = '';
